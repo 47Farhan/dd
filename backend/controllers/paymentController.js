@@ -1,0 +1,66 @@
+import paypal from '@paypal/checkout-server-sdk';
+
+const environment = process.env.PAYPAL_MODE === 'sandbox'
+  ? new paypal.core.SandboxEnvironment(
+      process.env.PAYPAL_CLIENT_ID,
+      process.env.PAYPAL_CLIENT_SECRET
+    )
+  : new paypal.core.LiveEnvironment(
+      process.env.PAYPAL_CLIENT_ID,
+      process.env.PAYPAL_CLIENT_SECRET
+    );
+
+const client = new paypal.core.PayPalHttpClient(environment);
+
+export const createOrder = async (req, res) => {
+  try {
+    const { amount, currency = 'GBP', description = 'TDB' } = req.body;
+
+    if (typeof amount !== 'number' || isNaN(amount) || amount <= 0) {
+      return res.status(400).json({ message: 'Invalid amount' });
+    }
+
+    const request = new paypal.orders.OrdersCreateRequest();
+    request.prefer('return=representation');
+    request.requestBody({
+      intent: 'CAPTURE',
+      purchase_units: [
+        {
+          amount: {
+            currency_code: currency,
+            value: amount.toFixed(2),
+          },
+          description,
+        },
+      ],
+      application_context: {
+        brand_name: 'TDB',
+        user_action: 'PAY_NOW',
+        shipping_preference: 'NO_SHIPPING',
+        return_url: `${process.env.CLIENT_URL || 'http://localhost:3000'}/order-success`,
+        cancel_url: `${process.env.CLIENT_URL || 'http://localhost:3000'}/cart`,
+      },
+    });
+
+    const order = await client.execute(request);
+    return res.status(201).json({ id: order.result.id });
+  } catch (error) {
+    return res.status(500).json({ message: 'Failed to create PayPal order' });
+  }
+};
+
+export const captureOrder = async (req, res) => {
+  try {
+    const { orderID } = req.body;
+    if (!orderID) {
+      return res.status(400).json({ message: 'orderID is required' });
+    }
+
+    const request = new paypal.orders.OrdersCaptureRequest(orderID);
+    request.requestBody({});
+    const capture = await client.execute(request);
+    return res.json(capture.result);
+  } catch (error) {
+    return res.status(500).json({ message: 'Failed to capture PayPal order' });
+  }
+};

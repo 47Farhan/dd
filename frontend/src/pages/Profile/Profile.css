@@ -1,0 +1,42 @@
+.profile-page {
+    min-height: calc(100vh - 140px);
+    padding: 2rem 0;
+  }
+  
+  .profile-card {
+    background: white;
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    max-width: 500px;
+    margin: 0 auto;
+  }
+  
+  .profile-card h1 {
+    text-align: center;
+    margin-bottom: 2rem;
+    color: #2c3e50;
+  }
+  
+  .profile-info {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .profile-field {
+    display: flex;
+    justify-content: space-between;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 5px;
+  }
+  
+  .profile-field label {
+    font-weight: 600;
+    color: #2c3e50;
+  }
+  
+  .profile-field span {
+    color: #6c757d;
+  }

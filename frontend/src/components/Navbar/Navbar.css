@@ -1,0 +1,240 @@
+/* CSS Variables for better maintainability */
+:root {
+  --primary-color: #0056b3; /* Darker, more professional blue */
+  --secondary-color: #f8f9fa;
+  --text-color: #333;
+  --light-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); /* Smoother shadow */
+  --nav-height: 70px;
+}
+
+.navbar {
+  background-color: #fff;
+  box-shadow: var(--light-shadow);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  padding: 0 2rem;
+  transition: box-shadow 0.3s ease; /* Subtle transition for shadow */
+}
+
+.nav-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: var(--nav-height);
+}
+
+.nav-logo {
+  display: flex;
+  align-items: center;
+  font-size: 1.6rem; /* Slightly larger logo text */
+  font-weight: 700; /* Bolder logo text */
+  color: var(--text-color);
+  text-decoration: none;
+  gap: 0.75rem; /* Increased gap */
+}
+
+.logo {
+  height: 36px; /* Slightly larger logo image */
+  width: auto;
+}
+
+.nav-menu {
+  display: flex;
+  list-style: none;
+  gap: 2rem;
+  margin: 0;
+  padding: 0;
+}
+
+.nav-link {
+  text-decoration: none;
+  color: var(--text-color);
+  font-weight: 500;
+  padding: 0.6rem 1.2rem; /* Increased padding */
+  border-radius: 6px; /* Slightly more rounded corners */
+  transition: all 0.3s ease;
+  position: relative; /* For the optional underline effect */
+}
+
+.nav-link:hover {
+  color: var(--primary-color);
+  background-color: var(--secondary-color);
+}
+
+/* Accessibility: Add focus state */
+.nav-link:focus {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+.nav-icons {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.icon-btn {
+  position: relative;
+  background: none;
+  border: none;
+  color: var(--text-color); /* Added explicit color */
+  font-size: 1.3rem; /* Slightly larger icon */
+  cursor: pointer;
+  padding: 0.6rem;
+  border-radius: 50%;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.icon-btn:hover {
+  background-color: var(--secondary-color);
+  color: var(--primary-color); /* Change icon color on hover */
+}
+
+.icon-btn:focus {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+.cart-count {
+  position: absolute;
+  top: -8px; /* Adjusted position */
+  right: -8px; /* Adjusted position */
+  background: #ff4444;
+  color: white;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  font-size: 0.75rem; /* Slightly larger font */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  pointer-events: none; /* Ensure it doesn't interfere with the button click */
+}
+
+.user-auth {
+  display: flex;
+  align-items: center;
+  margin-left: 1.5rem; /* Increased margin for separation */
+}
+
+.auth-buttons {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.auth-btn {
+  padding: 0.6rem 1.2rem;
+  border-radius: 6px;
+  text-decoration: none;
+  font-size: 1rem;
+  font-weight: 600; /* Bolder text */
+  transition: all 0.3s ease;
+}
+
+.login-btn {
+  color: var(--primary-color);
+  border: 1px solid var(--primary-color);
+  background: transparent;
+}
+
+.login-btn:hover {
+  background: var(--primary-color);
+  color: white;
+}
+
+.register-btn {
+  background: var(--primary-color);
+  color: white;
+  border: 1px solid var(--primary-color);
+}
+
+.register-btn:hover {
+  background: #004085; /* Darker shade on hover */
+  border-color: #004085;
+}
+
+/* User Menu Styles */
+.user-menu {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.user-name {
+  color: var(--text-color);
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.logout-btn {
+  padding: 0.5rem 1rem;
+  background: #dc3545; /* Bootstrap danger red */
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: background-color 0.3s ease;
+}
+
+.logout-btn:hover {
+  background: #c82333;
+}
+
+@media (max-width: 768px) {
+  .navbar {
+    padding: 0 1rem;
+    height: 60px; /* Slightly shorter on mobile */
+  }
+
+  .nav-container {
+    height: 60px;
+  }
+  
+  /* Hides the text on small screens, keeping only the logo image */
+  .nav-logo span { 
+    display: none;
+  }
+  
+  .nav-menu {
+    /* For now, keeping them visible but closer together: */
+    gap: 0.75rem; 
+  }
+  
+  .nav-link {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.9rem;
+  }
+
+  /* Adjustments for Auth/User block on mobile */
+  .user-auth {
+    margin-left: 0.75rem;
+  }
+  
+  .auth-buttons {
+    gap: 0.4rem;
+  }
+  
+  .auth-btn {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
+  }
+  
+  .user-menu {
+    gap: 0.75rem;
+  }
+  
+  .user-name {
+    font-size: 0.85rem;
+  }
+  
+  .logout-btn {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
+  }
+}

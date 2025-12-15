@@ -1,0 +1,12 @@
+.checkout-page {
+    min-height: calc(100vh - 140px);
+    padding: 2rem 0;
+  }
+  
+  .checkout-content {
+    background: white;
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    text-align: center;
+  }
