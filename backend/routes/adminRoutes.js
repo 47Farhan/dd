@@ -7,6 +7,7 @@ import {
   updateOrderStatus,
   getDashboardStats,
   getAllProducts
+  , getAllUsers, createUser, updateUser, deleteUser
 } from '../controllers/adminController.js';
 import { protect, admin } from '../middleware/authMiddleware.js';
 
@@ -21,6 +22,12 @@ router.get('/products', getAllProducts);
 router.post('/products', createProduct);
 router.put('/products/:id', updateProduct);
 router.delete('/products/:id', deleteProduct);
+
+// User management
+router.get('/users', getAllUsers);
+router.post('/users', createUser);
+router.put('/users/:id', updateUser);
+router.delete('/users/:id', deleteUser);
 
 // Order routes
 router.get('/orders', getAllOrders);

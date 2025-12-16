@@ -4,21 +4,29 @@ import AdminLogin from './AdminLogin';
 import AdminDashboard from './AdminDashboard';
 import AddProduct from './AddProduct';
 import ProductManagement from './ProductManagement';
-import EditProduct from './EditProduct'; // Add this
+import EditProduct from './EditProduct';
+import AdminLayout from './AdminLayout';
+import Dashboard from './Dashboard';
+import Users from './Users';
+import Orders from './Orders';
 
 const PrivateRoute = ({ children }) => {
-  const user = JSON.parse(localStorage.getItem('adminUser'));
-  
+  const adminRaw = localStorage.getItem('adminUser');
+  const userRaw = localStorage.getItem('userData') || localStorage.getItem('user');
+  let user = null;
+  try {
+    if (adminRaw) user = JSON.parse(adminRaw);
+    else if (userRaw) user = JSON.parse(userRaw);
+  } catch (e) {
+    user = null;
+  }
+
   if (!user || user.role !== 'admin') {
     return <Navigate to="/admin/login" />;
   }
-  
+
   return children;
 };
-
-const OrdersStub = () => (
-  <div style={{padding: '2rem'}}><h1>Orders Management</h1><p>Order management functionality goes here.</p></div>
-);
 
 const AdminRoutes = () => {
   return (
@@ -28,7 +36,9 @@ const AdminRoutes = () => {
         path="" 
         element={
           <PrivateRoute>
-            <AdminDashboard />
+            <AdminLayout>
+              <Dashboard />
+            </AdminLayout>
           </PrivateRoute>
         } 
       />
@@ -36,7 +46,9 @@ const AdminRoutes = () => {
         path="add-product" 
         element={
           <PrivateRoute>
-            <AddProduct />
+            <AdminLayout>
+              <AddProduct />
+            </AdminLayout>
           </PrivateRoute>
         } 
       />
@@ -44,7 +56,9 @@ const AdminRoutes = () => {
         path="products" 
         element={
           <PrivateRoute>
-            <ProductManagement />
+            <AdminLayout>
+              <ProductManagement />
+            </AdminLayout>
           </PrivateRoute>
         } 
       />
@@ -52,7 +66,9 @@ const AdminRoutes = () => {
         path="products/edit/:id" 
         element={
           <PrivateRoute>
-            <EditProduct />
+            <AdminLayout>
+              <EditProduct />
+            </AdminLayout>
           </PrivateRoute>
         } 
       />
@@ -60,9 +76,21 @@ const AdminRoutes = () => {
         path="orders" 
         element={
           <PrivateRoute>
-            <OrdersStub />
+            <AdminLayout>
+              <Orders />
+            </AdminLayout>
           </PrivateRoute>
         } 
+      />
+      <Route
+        path="users"
+        element={
+          <PrivateRoute>
+            <AdminLayout>
+              <Users />
+            </AdminLayout>
+          </PrivateRoute>
+        }
       />
     </Routes>
   );

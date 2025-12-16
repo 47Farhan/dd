@@ -1,6 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createProduct } from '../services/adminAPI';
+import {
+  Box, Card, CardContent, Typography, TextField, Button, Grid,
+  MenuItem, Alert, CircularProgress
+} from '@mui/material';
+import SaveIcon from '@mui/icons-material/Save';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
 const AddProduct = () => {
   const [formData, setFormData] = useState({
@@ -17,6 +23,7 @@ const AddProduct = () => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -30,6 +37,7 @@ const AddProduct = () => {
     e.preventDefault();
     setLoading(true);
     setError('');
+    setSuccess('');
 
     try {
       const payload = {
@@ -46,7 +54,10 @@ const AddProduct = () => {
       };
 
       await createProduct(payload);
-      navigate('/admin/products');
+      setSuccess('Product created successfully!');
+      setTimeout(() => {
+        navigate('/admin/products');
+      }, 1500);
     } catch (error) {
       setError('Failed to create product: ' + error.message);
     } finally {
@@ -55,148 +66,205 @@ const AddProduct = () => {
   };
 
   return (
-    <div style={{ padding: '2rem' }}>
-      <h1>Add New Product</h1>
-      
-      {error && <div style={{ color: 'red', marginBottom: '1rem' }}>{error}</div>}
-      
-      <form onSubmit={handleSubmit} style={{ maxWidth: '600px' }}>
-        <div style={{ marginBottom: '1rem' }}>
-          <label>Product Name:</label>
-          <input
-            type="text"
-            name="name"
-            value={formData.name}
-            onChange={handleChange}
-            required
-            style={{ width: '100%', padding: '0.5rem' }}
-          />
-        </div>
-
-        <div style={{ marginBottom: '1rem' }}>
-          <label>Description:</label>
-          <textarea
-            name="description"
-            value={formData.description}
-            onChange={handleChange}
-            required
-            style={{ width: '100%', padding: '0.5rem', minHeight: '100px' }}
-          />
-        </div>
-
-        <div style={{ marginBottom: '1rem' }}>
-          <label>Price:</label>
-          <input
-            type="number"
-            name="price"
-            value={formData.price}
-            onChange={handleChange}
-            required
-            style={{ width: '100%', padding: '0.5rem' }}
-          />
-        </div>
-
-        <div style={{ marginBottom: '1rem' }}>
-          <label>Category:</label>
-          <select
-            name="category"
-            value={formData.category}
-            onChange={handleChange}
-            required
-            style={{ width: '100%', padding: '0.5rem' }}
-          >
-            <option value="men">Men</option>
-            <option value="women">Women</option>
-            <option value="kids">Kids</option>
-          </select>
-        </div>
-
-        <div style={{ marginBottom: '1rem' }}>
-          <label>Subcategory:</label>
-          <input
-            type="text"
-            name="subcategory"
-            value={formData.subcategory}
-            onChange={handleChange}
-            required
-            style={{ width: '100%', padding: '0.5rem' }}
-          />
-        </div>
-
-        <div style={{ marginBottom: '1rem' }}>
-          <label>Brand:</label>
-          <input
-            type="text"
-            name="brand"
-            value={formData.brand}
-            onChange={handleChange}
-            required
-            style={{ width: '100%', padding: '0.5rem' }}
-          />
-        </div>
-
-        <div style={{ marginBottom: '1rem' }}>
-          <label>Inventory:</label>
-          <input
-            type="number"
-            name="inventory"
-            value={formData.inventory}
-            onChange={handleChange}
-            required
-            style={{ width: '100%', padding: '0.5rem' }}
-          />
-        </div>
-
-        <div style={{ marginBottom: '1rem' }}>
-          <label>Original Price (optional):</label>
-          <input
-            type="number"
-            name="originalPrice"
-            value={formData.originalPrice}
-            onChange={handleChange}
-            style={{ width: '100%', padding: '0.5rem' }}
-          />
-        </div>
-
-        <div style={{ marginBottom: '1rem' }}>
-          <label>SKU:</label>
-          <input
-            type="text"
-            name="sku"
-            value={formData.sku}
-            onChange={handleChange}
-            required
-            style={{ width: '100%', padding: '0.5rem' }}
-          />
-        </div>
-
-        <div style={{ marginBottom: '1rem' }}>
-          <label>Image URL:</label>
-          <input
-            type="url"
-            name="image"
-            value={formData.image}
-            onChange={handleChange}
-            style={{ width: '100%', padding: '0.5rem' }}
-          />
-        </div>
-
-        <button 
-          type="submit" 
-          disabled={loading}
-          style={{ 
-            padding: '0.75rem 1.5rem', 
-            background: '#007bff', 
-            color: 'white', 
-            border: 'none', 
-            borderRadius: '4px',
-            cursor: loading ? 'not-allowed' : 'pointer'
-          }}
+    <Box>
+      <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Button
+          startIcon={<ArrowBackIcon />}
+          onClick={() => navigate('/admin/products')}
+          sx={{ textTransform: 'none' }}
         >
-          {loading ? 'Creating...' : 'Create Product'}
-        </button>
-      </form>
-    </div>
+          Back
+        </Button>
+        <Box>
+          <Typography variant="h4" fontWeight={600} color="#2c3e50">
+            Add New Product
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Create a new product listing
+          </Typography>
+        </Box>
+      </Box>
+
+      {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
+      {success && <Alert severity="success" sx={{ mb: 3 }}>{success}</Alert>}
+
+      <Card elevation={0} sx={{ borderRadius: 3, border: '1px solid #e0e0e0' }}>
+        <CardContent sx={{ p: 4 }}>
+          <form onSubmit={handleSubmit}>
+            <Grid container spacing={3}>
+              {/* Product Name */}
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Product Name"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  required
+                  placeholder="Enter product name"
+                />
+              </Grid>
+
+              {/* Description */}
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Description"
+                  name="description"
+                  value={formData.description}
+                  onChange={handleChange}
+                  required
+                  multiline
+                  rows={4}
+                  placeholder="Enter product description"
+                />
+              </Grid>
+
+              {/* Price and Original Price */}
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="Price"
+                  name="price"
+                  type="number"
+                  value={formData.price}
+                  onChange={handleChange}
+                  required
+                  placeholder="0.00"
+                  InputProps={{
+                    startAdornment: <Typography sx={{ mr: 1, color: 'text.secondary' }}>£</Typography>
+                  }}
+                />
+              </Grid>
+
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="Original Price (Optional)"
+                  name="originalPrice"
+                  type="number"
+                  value={formData.originalPrice}
+                  onChange={handleChange}
+                  placeholder="0.00"
+                  InputProps={{
+                    startAdornment: <Typography sx={{ mr: 1, color: 'text.secondary' }}>£</Typography>
+                  }}
+                />
+              </Grid>
+
+              {/* Category and Subcategory */}
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  select
+                  label="Category"
+                  name="category"
+                  value={formData.category}
+                  onChange={handleChange}
+                  required
+                >
+                  <MenuItem value="men">Men</MenuItem>
+                  <MenuItem value="women">Women</MenuItem>
+                  <MenuItem value="kids">Kids</MenuItem>
+                </TextField>
+              </Grid>
+
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="Subcategory"
+                  name="subcategory"
+                  value={formData.subcategory}
+                  onChange={handleChange}
+                  required
+                  placeholder="e.g., Shirts, Jeans, Dresses"
+                />
+              </Grid>
+
+              {/* Brand and SKU */}
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="Brand"
+                  name="brand"
+                  value={formData.brand}
+                  onChange={handleChange}
+                  required
+                  placeholder="Enter brand name"
+                />
+              </Grid>
+
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="SKU"
+                  name="sku"
+                  value={formData.sku}
+                  onChange={handleChange}
+                  required
+                  placeholder="Enter SKU code"
+                />
+              </Grid>
+
+              {/* Inventory */}
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="Inventory"
+                  name="inventory"
+                  type="number"
+                  value={formData.inventory}
+                  onChange={handleChange}
+                  required
+                  placeholder="Stock quantity"
+                />
+              </Grid>
+
+              {/* Image URL */}
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="Image URL"
+                  name="image"
+                  type="url"
+                  value={formData.image}
+                  onChange={handleChange}
+                  placeholder="https://example.com/image.jpg"
+                />
+              </Grid>
+
+              {/* Submit Button */}
+              <Grid item xs={12}>
+                <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 2 }}>
+                  <Button
+                    variant="outlined"
+                    onClick={() => navigate('/admin/products')}
+                    disabled={loading}
+                    sx={{ textTransform: 'none', px: 4 }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    variant="contained"
+                    disabled={loading}
+                    startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <SaveIcon />}
+                    sx={{
+                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      textTransform: 'none',
+                      fontWeight: 600,
+                      px: 4
+                    }}
+                  >
+                    {loading ? 'Creating...' : 'Create Product'}
+                  </Button>
+                </Box>
+              </Grid>
+            </Grid>
+          </form>
+        </CardContent>
+      </Card>
+    </Box>
   );
 };
 

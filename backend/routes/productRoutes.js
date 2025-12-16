@@ -27,11 +27,12 @@ const upload = multer({ storage });
 
 //////////////////////
 // Existing GET Routes
+// Note: place specific routes before parameter routes to avoid route conflicts
 //////////////////////
 router.route('/').get(getProducts);
 router.route('/featured').get(getFeaturedProducts);
-router.route('/:id').get(getProductById);
 router.route('/category/:category').get(getProductsByCategory);
+router.route('/:id').get(getProductById);
 
 //////////////////////
 // NEW: Upload Product Image

@@ -22,12 +22,7 @@ import Profile from './pages/Profile/Profile';
 import Cart from './pages/Cart/Cart';
 import Checkout from './pages/Checkout/Checkout';
 
-// Admin components - Note: AdminLayout import is now removed as requested
-import AdminLogin from './AdminComponents/AdminLogin';
-import AdminDashboard from './AdminComponents/AdminDashboard';
-import ProductManagement from './AdminComponents/ProductManagement';
-import AddProduct from './AdminComponents/AddProduct';
-import EditProduct from './AdminComponents/EditProduct';
+// Admin Routes
 import AdminRoutes from './AdminComponents/AdminRoutes';
 
 
@@ -69,21 +64,8 @@ function App() {
                 </>
               } />
               
-              <Route path="/admin/*" element={
-                <Routes>
-                  <Route path="login" element={<AdminLogin />} />
-                  
-                  {/* All admin pages are now direct children */}
-                  <Route path="/" element={<AdminDashboard />} /> {/* /admin/ */}
-                  <Route path="dashboard" element={<AdminDashboard />} />
-                  <Route path="products" element={<ProductManagement />} />
-                  <Route path="add-product" element={<AddProduct />} />
-                  <Route path="edit-product/:id" element={<EditProduct />} />
-                  <Route path="admin-routes" element={<AdminRoutes />} />
-                  
-                  {/* <Route path="*" element={<h2>Admin 404</h2>} /> */}
-                </Routes>
-              } />
+              {/* Admin Routes - All admin pages with sidebar layout */}
+              <Route path="/admin/*" element={<AdminRoutes />} />
               
             </Routes>
           </div>
