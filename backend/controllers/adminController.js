@@ -241,10 +241,10 @@ export const createUser = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Email already exists' });
     }
 
-    const user = new User({ name, email: email.toLowerCase(), password, role: role || 'user' });
+    const user = new User({ name, email: email.toLowerCase(), password, role: role || 'user', isActive: true });
     await user.save();
 
-    const safeUser = { _id: user._id, name: user.name, email: user.email, role: user.role };
+    const safeUser = { _id: user._id, name: user.name, email: user.email, role: user.role, isActive: user.isActive };
     res.status(201).json({ success: true, data: safeUser });
   } catch (error) {
     console.error('Create user error:', error);
@@ -257,19 +257,27 @@ export const updateUser = async (req, res) => {
     const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ success: false, message: 'User not found' });
 
-    const { name, email, password, role } = req.body || {};
+    const { name, email, password, role, isActive } = req.body || {};
     if (name) user.name = name;
     if (email) user.email = email.toLowerCase();
     if (typeof role !== 'undefined') user.role = role;
+    if (typeof isActive !== 'undefined') user.isActive = isActive;
     if (password) user.password = password; // will be hashed by pre-save
 
     await user.save();
 
-    const safeUser = { _id: user._id, name: user.name, email: user.email, role: user.role };
+    const safeUser = { _id: user._id, name: user.name, email: user.email, role: user.role, isActive: user.isActive };
     res.json({ success: true, data: safeUser });
   } catch (error) {
     console.error('Update user error:', error);
-    res.status(500).json({ success: false, message: 'Error updating user' });
+    if (error?.code === 11000) {
+      return res.status(400).json({ success: false, message: 'Email already in use' });
+    }
+    if (error?.name === 'ValidationError') {
+      return res.status(400).json({ success: false, message: 'Invalid user data' });
+    }
+    // Return the error message for easier debugging (can be removed/obfuscated later)
+    res.status(500).json({ success: false, message: error.message || 'Error updating user' });
   }
 };
 

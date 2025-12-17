@@ -15,14 +15,14 @@ export const protect = async (req, res, next) => {
         process.env.JWT_SECRET || '6b9b2155a53b11e0fb0555df22255a7f44535a088c9dba5b7647e699f35adcbb46265684962b3fb195959cf72074cbbe6df4c3a540989aee8be7c11a2a4d2641'
       );
       req.user = await User.findById(decoded.userId).select('-password');
-      next();
+      return next();
     } catch (error) {
-      res.status(401).json({ message: 'Not authorized, token failed' });
+      return res.status(401).json({ message: 'Not authorized, token failed' });
     }
   }
 
   if (!token) {
-    res.status(401).json({ message: 'Not authorized, no token' });
+    return res.status(401).json({ message: 'Not authorized, no token' });
   }
 };
 

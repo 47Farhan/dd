@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import {
   Box, Card, CardContent, Typography, Table, TableHead, TableRow, TableCell,
   TableBody, Chip, Avatar, CircularProgress, TextField, InputAdornment,
-  IconButton, Menu, MenuItem, Select, FormControl, InputLabel
+  IconButton, Menu, MenuItem, Select, FormControl, InputLabel,
+  Dialog, DialogTitle, DialogContent, DialogActions, Button
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
@@ -17,6 +18,11 @@ const Orders = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [viewOpen, setViewOpen] = useState(false);
+  const [statusOpen, setStatusOpen] = useState(false);
+  const [statusValue, setStatusValue] = useState('');
+  const [trackingNumber, setTrackingNumber] = useState('');
+  const [actionLoading, setActionLoading] = useState(false);
 
   useEffect(() => {
     fetchOrders();
@@ -34,7 +40,8 @@ const Orders = () => {
       const headers = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
-      const res = await fetch('/api/orders', { headers });
+      // Use admin orders endpoint for admin management
+      const res = await fetch('/api/admin/orders', { headers });
       if (!res.ok) {
         throw new Error('Failed to fetch orders');
       }
@@ -79,7 +86,70 @@ const Orders = () => {
 
   const handleMenuClose = () => {
     setAnchorEl(null);
+  };
+
+  const handleViewDetails = () => {
+    setViewOpen(true);
+    handleMenuClose();
+  };
+
+  const handleCloseView = () => {
+    setViewOpen(false);
     setSelectedOrder(null);
+  };
+
+  const handleOpenUpdateStatus = () => {
+    setStatusValue(selectedOrder?.status || 'pending');
+    setTrackingNumber(selectedOrder?.trackingNumber || '');
+    setStatusOpen(true);
+    handleMenuClose();
+  };
+
+  const handleCloseUpdateStatus = () => {
+    setStatusOpen(false);
+    setStatusValue('');
+    setTrackingNumber('');
+    setSelectedOrder(null);
+  };
+
+  const handlePrintInvoice = () => {
+    if (!selectedOrder) return handleMenuClose();
+    const order = selectedOrder;
+    const win = window.open('', '_blank');
+    const html = `\n      <html>\n      <head>\n        <title>Invoice - ${order._id}</title>\n        <style>\n          body { font-family: Arial, sans-serif; padding: 20px; }\n          h1 { font-size: 20px }\n          table { width: 100%; border-collapse: collapse; }\n          th, td { border: 1px solid #ddd; padding: 8px; }\n        </style>\n      </head>\n      <body>\n        <h1>Invoice</h1>\n        <p><strong>Order:</strong> ${order._id}</p>\n        <p><strong>Customer:</strong> ${order.user?.name || 'Guest'} &lt;${order.user?.email || ''}&gt;</p>\n        <h3>Items</h3>\n        <table>\n          <thead><tr><th>Product</th><th>Qty</th><th>Price</th></tr></thead>\n          <tbody>\n            ${(order.orderItems || order.items || []).map(i => `<tr><td>${i.name || i.title || ''}</td><td>${i.qty || i.quantity || 1}</td><td>£${Number(i.price||i.unitPrice||0).toFixed(2)}</td></tr>`).join('')}\n          </tbody>\n        </table>\n        <h3>Total: £${Number(order.totalPrice||order.totalAmount||0).toFixed(2)}</h3>\n      </body>\n      </html>\n    `;
+    win.document.write(html);
+    win.document.close();
+    win.focus();
+    win.print();
+    handleMenuClose();
+  };
+
+  const handleUpdateStatusSubmit = async (e) => {
+    e.preventDefault();
+    if (!selectedOrder) return;
+    setActionLoading(true);
+    try {
+      const token = localStorage.getItem('adminToken') || localStorage.getItem('userToken');
+      const headers = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      const res = await fetch(`/api/admin/orders/${selectedOrder._id}`, {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify({ status: statusValue, trackingNumber: trackingNumber || undefined })
+      });
+      if (!res.ok) {
+        const txt = await res.text();
+        throw new Error(txt || `Status ${res.status}`);
+      }
+      await fetchOrders();
+      handleCloseUpdateStatus();
+    } catch (err) {
+      console.error('Failed to update order status', err);
+      setError(err.message || 'Failed to update status');
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   const getStatusColor = (order) => {
@@ -258,10 +328,83 @@ const Orders = () => {
         open={Boolean(anchorEl)}
         onClose={handleMenuClose}
       >
-        <MenuItem onClick={handleMenuClose}>View Details</MenuItem>
-        <MenuItem onClick={handleMenuClose}>Update Status</MenuItem>
-        <MenuItem onClick={handleMenuClose}>Print Invoice</MenuItem>
+        <MenuItem onClick={handleViewDetails}>View Details</MenuItem>
+        <MenuItem onClick={handleOpenUpdateStatus}>Update Status</MenuItem>
+        <MenuItem onClick={handlePrintInvoice}>Print Invoice</MenuItem>
       </Menu>
+
+      {/* View Details Dialog */}
+      {selectedOrder && (
+        <Dialog open={viewOpen} onClose={handleCloseView} maxWidth="md" fullWidth>
+          <DialogTitle>Order Details</DialogTitle>
+          <DialogContent dividers>
+            <Typography variant="subtitle1" gutterBottom><strong>Order ID:</strong> {selectedOrder._id}</Typography>
+            <Typography variant="body2" gutterBottom><strong>Customer:</strong> {selectedOrder.user?.name || 'Guest'} ({selectedOrder.user?.email || '—'})</Typography>
+            <Typography variant="body2" gutterBottom><strong>Status:</strong> {selectedOrder.status || (selectedOrder.payment?.status === 'completed' ? 'Paid' : 'Pending')}</Typography>
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="subtitle2">Items</Typography>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Product</TableCell>
+                    <TableCell>Qty</TableCell>
+                    <TableCell>Price</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {(selectedOrder.orderItems || selectedOrder.items || []).map((it, idx) => (
+                    <TableRow key={idx}>
+                      <TableCell>{it.name || it.title || it.product || '—'}</TableCell>
+                      <TableCell>{it.qty || it.quantity || 1}</TableCell>
+                      <TableCell>£{Number(it.price || it.unitPrice || 0).toFixed(2)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </Box>
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="body2"><strong>Total:</strong> £{Number(selectedOrder.totalPrice || selectedOrder.totalAmount || 0).toFixed(2)}</Typography>
+            </Box>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleCloseView}>Close</Button>
+            <Button onClick={() => { handlePrintInvoice(); handleCloseView(); }} variant="contained">Print</Button>
+          </DialogActions>
+        </Dialog>
+      )}
+
+      {/* Update Status Dialog */}
+      {selectedOrder && (
+        <Dialog open={statusOpen} onClose={handleCloseUpdateStatus} maxWidth="sm" fullWidth>
+          <DialogTitle>Update Order Status</DialogTitle>
+          <form onSubmit={handleUpdateStatusSubmit}>
+            <DialogContent>
+              <FormControl fullWidth margin="normal">
+                <InputLabel>Status</InputLabel>
+                <Select value={statusValue} label="Status" onChange={(e) => setStatusValue(e.target.value)}>
+                  <MenuItem value="pending">Pending</MenuItem>
+                  <MenuItem value="processing">Processing</MenuItem>
+                  <MenuItem value="shipped">Shipped</MenuItem>
+                  <MenuItem value="delivered">Delivered</MenuItem>
+                  <MenuItem value="cancelled">Cancelled</MenuItem>
+                </Select>
+              </FormControl>
+
+              <TextField
+                fullWidth
+                label="Tracking Number (optional)"
+                value={trackingNumber}
+                onChange={(e) => setTrackingNumber(e.target.value)}
+                margin="normal"
+              />
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={handleCloseUpdateStatus}>Cancel</Button>
+              <Button type="submit" variant="contained" disabled={actionLoading}>{actionLoading ? 'Saving...' : 'Save'}</Button>
+            </DialogActions>
+          </form>
+        </Dialog>
+      )}
     </div>
   );
 };

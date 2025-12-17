@@ -15,6 +15,8 @@ const Products = () => {
     ratings: []
   });
   const [searchTerm, setSearchTerm] = useState('');
+  const [derivedCategories, setDerivedCategories] = useState([]);
+  const [derivedBrands, setDerivedBrands] = useState([]);
 
   useEffect(() => {
     fetchProducts();
@@ -31,6 +33,12 @@ const Products = () => {
       const list = Array.isArray(data.products) ? data.products : [];
       setProducts(list);
       setFilteredProducts(list);
+      // derive categories and brands for the sidebar
+      const uniqueCategories = Array.from(new Set(list.map(p => String(p.category || 'other').toLowerCase())));
+      const uniqueBrands = Array.from(new Set(list.map(p => p.brand || 'Unknown')));
+      // store derived lists for sidebar
+      setDerivedCategories(uniqueCategories);
+      setDerivedBrands(uniqueBrands);
     } catch (error) {
       console.error('Error fetching products:', error);
     } finally {
@@ -99,7 +107,9 @@ const Products = () => {
         <div style={styles.sidebar}>
           <FilterSidebar 
             filters={filters} 
-            onFilterChange={setFilters} 
+            onFilterChange={setFilters}
+            categories={derivedCategories}
+            brands={derivedBrands}
           />
         </div>
         

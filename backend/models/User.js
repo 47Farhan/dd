@@ -22,6 +22,10 @@ const userSchema = mongoose.Schema(
       enum: ['user', 'admin'],
       default: 'user',
     },
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
     shippingAddress: {
       address: String,
       city: String,
@@ -35,9 +39,9 @@ const userSchema = mongoose.Schema(
 );
 
 // Hash password before saving
-userSchema.pre('save', async function (next) {
+userSchema.pre('save', async function () {
   if (!this.isModified('password')) {
-    return next();
+    return;
   }
 
   const salt = await bcrypt.genSalt(10);

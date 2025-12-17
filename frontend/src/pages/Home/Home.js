@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import ProductCard from '../../components/ProductCard/ProductCard';
+import { productAPI } from '../../services/api';
 
 const Home = () => {
   const [featuredProducts, setFeaturedProducts] = useState([]);
@@ -13,91 +14,35 @@ const Home = () => {
 
   const fetchHomeData = async () => {
     try {
-      // Pending replace with actual API call
-      const mockFeaturedProducts = [
-        {
-          _id: '19',
-          name: 'Wireless Bluetooth Headphones',
-          images: ['https://plus.unsplash.com/premium_photo-1680346529160-549ad950bd1f?q=80&w=1074&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'],
-          description: 'Premium wireless headphones with noise cancellation',
-          price: 199.99,
-          category: 'Electronics',
-          brand: 'Sony',
-          rating: 4.8,
-          numReviews: 156,
-          featured: true
-        },
-        {
-          _id: '20',
-          name: 'Smart Fitness Watch',
-          images: ['https://images.unsplash.com/photo-1656955003707-9a86ad069bb3?q=80&w=1074&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'],
-          description: 'Track your fitness with this advanced smartwatch',
-          price: 299.99,
-          category: 'Electronics',
-          brand: 'Fitbit',
-          rating: 4.6,
-          numReviews: 234,
-          featured: true
-        },
-        {
-          _id: '21',
-          name: 'Designer Handbag',
-          images: ['https://images.unsplash.com/photo-1761646238175-5d25cf3566f7?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'],
-          description: 'Luxury designer handbag with premium leather',
-          price: 399.99,
-          category: 'Women',
-          brand: 'Gucci',
-          rating: 4.9,
-          numReviews: 89,
-          featured: true
-        },
-        {
-          _id: '22',
-          name: 'Gaming Laptop',
-          images: ['https://images.unsplash.com/photo-1630794180018-433d915c34ac?q=80&w=1332&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'],
-          description: 'High-performance gaming laptop with RTX graphics',
-          price: 1499.99,
-          category: 'Electronics',
-          brand: 'ASUS',
-          rating: 4.7,
-          numReviews: 312,
-          featured: true
-        }
-      ];
+      // Fetch featured products from API
+      const featuredResp = await productAPI.getFeatured();
+      const featured = featuredResp?.data || [];
+      setFeaturedProducts(Array.isArray(featured) ? featured : []);
 
-      const mockCategories = [
-        {
-          id: 1,
-          name: "Men's Fashion",
-          image: 'https://plus.unsplash.com/premium_photo-1669688174622-0393f5c6baa2?q=80&w=764&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-          count: 156,
-          link: '/men'
-        },
-        {
-          id: 2,
-          name: "Women's Fashion",
-          image: 'https://images.unsplash.com/photo-1617922001439-4a2e6562f328?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-          count: 234,
-          link: '/women'
-        },
-        {
-          id: 3,
-          name: 'Kids & Toys',
-          image: 'https://images.unsplash.com/photo-1626187429639-7a77bfad0523?q=80&w=735&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-          count: 189,
-          link: '/kids'
-        },
-        {
-          id: 4,
-          name: 'Electronics',
-          image: 'https://images.unsplash.com/photo-1498049794561-7780e7231661?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-          count: 312,
-          link: '/products?category=electronics'
-        }
-      ];
+      // Fetch a page of products to derive categories (seeded backend is small)
+      const allResp = await productAPI.getAll();
+      const data = allResp?.data || {};
+      const list = Array.isArray(data.products) ? data.products : [];
 
-      setFeaturedProducts(mockFeaturedProducts);
-      setCategories(mockCategories);
+      // Derive categories from products (unique values)
+      const grouped = {};
+      list.forEach((p) => {
+        const cat = String(p.category || 'other').toLowerCase();
+        if (!grouped[cat]) {
+          grouped[cat] = { count: 0, image: p.images?.[0]?.url || p.images?.[0] || '/images/category-placeholder.jpg' };
+        }
+        grouped[cat].count += 1;
+      });
+
+      const derivedCategories = Object.keys(grouped).map((cat, idx) => ({
+        id: idx + 1,
+        name: cat.charAt(0).toUpperCase() + cat.slice(1),
+        image: grouped[cat].image,
+        count: grouped[cat].count,
+        link: `/products?category=${encodeURIComponent(cat)}`
+      }));
+
+      setCategories(derivedCategories);
     } catch (error) {
       console.error('Error fetching home data:', error);
     } finally {

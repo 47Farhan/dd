@@ -1,8 +1,10 @@
 import React from 'react';
 
-const FilterSidebar = ({ filters, onFilterChange }) => {
-  const categories = ['Men', 'Women', 'Kids', 'Electronics', 'Clothing', 'Accessories'];
-  const brands = ['Nike', 'Adidas', 'Apple', 'Samsung', 'Sony'];
+const FilterSidebar = ({ filters, onFilterChange, categories = [], brands = [] }) => {
+  // Expect categories as array of category keys (e.g. ['men','women'])
+  const defaultCategories = ['men', 'women', 'kids', 'electronics', 'clothing', 'accessories'];
+  const categoryOptions = (Array.isArray(categories) && categories.length > 0) ? categories : defaultCategories;
+  const brandOptions = (Array.isArray(brands) && brands.length > 0) ? brands : ['Nike', 'Adidas', 'Apple', 'Samsung', 'Sony'];
   const priceRanges = [
     { label: 'Under $25', min: 0, max: 25 },
     { label: '$25 to $50', min: 25, max: 50 },
@@ -17,27 +19,31 @@ const FilterSidebar = ({ filters, onFilterChange }) => {
       {/* Category Filter */}
       <div style={styles.filterGroup}>
         <h4 style={styles.filterTitle}>Category</h4>
-        {categories.map(category => (
-          <label key={category} style={styles.checkboxLabel}>
-            <input
-              type="checkbox"
-              checked={filters.categories.includes(category)}
-              onChange={(e) => {
-                const newCategories = e.target.checked
-                  ? [...filters.categories, category]
-                  : filters.categories.filter(c => c !== category);
-                onFilterChange({ ...filters, categories: newCategories });
-              }}
-            />
-            {category}
-          </label>
-        ))}
+        {categoryOptions.map(category => {
+          const value = String(category).toLowerCase();
+          const display = value.charAt(0).toUpperCase() + value.slice(1);
+          return (
+            <label key={value} style={styles.checkboxLabel}>
+              <input
+                type="checkbox"
+                checked={filters.categories.includes(value)}
+                onChange={(e) => {
+                  const newCategories = e.target.checked
+                    ? [...filters.categories, value]
+                    : filters.categories.filter(c => c !== value);
+                  onFilterChange({ ...filters, categories: newCategories });
+                }}
+              />
+              {display}
+            </label>
+          );
+        })}
       </div>
 
       {/* Brand Filter */}
       <div style={styles.filterGroup}>
         <h4 style={styles.filterTitle}>Brand</h4>
-        {brands.map(brand => (
+        {brandOptions.map(brand => (
           <label key={brand} style={styles.checkboxLabel}>
             <input
               type="checkbox"
