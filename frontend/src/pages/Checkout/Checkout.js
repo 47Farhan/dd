@@ -19,7 +19,7 @@ const Checkout = () => {
     country: ''
   });
 
-  const rawClientId = process.env.REACT_APP_PAYPAL_CLIENT_ID || '';
+  const rawClientId = process.env.REACT_APP_PAYPAL_CLIENT_ID;
   const paypalClientId = rawClientId.trim();
   const isValidClientId = paypalClientId && paypalClientId.length > 20 && !paypalClientId.includes(' ');
 

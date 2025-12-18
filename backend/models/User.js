@@ -32,6 +32,22 @@ const userSchema = mongoose.Schema(
       postalCode: String,
       country: String,
     },
+    // Server-side cart to persist per-user cart items
+    cart: [
+      {
+        productId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'Product',
+        },
+        name: String,
+        price: Number,
+        quantity: {
+          type: Number,
+          default: 1,
+        },
+        image: String,
+      },
+    ],
   },
   {
     timestamps: true,

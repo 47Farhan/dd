@@ -89,3 +89,47 @@ export const getUserProfile = async (req, res) => {
         res.status(500).json({ message: 'Server Error' });
     }
 };
+
+// @desc    Get user cart
+// @route   GET /api/users/cart
+// @access  Private
+export const getUserCart = async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id).select('cart');
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        res.json({ cart: user.cart || [] });
+    } catch (error) {
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
+// @desc    Update user cart
+// @route   PUT /api/users/cart
+// @access  Private
+export const updateUserCart = async (req, res) => {
+    try {
+        const { cart } = req.body;
+        if (!Array.isArray(cart)) {
+            return res.status(400).json({ message: 'Cart must be an array' });
+        }
+
+        const user = await User.findById(req.user._id);
+        if (!user) return res.status(404).json({ message: 'User not found' });
+
+        // Replace server cart with provided cart (caller should send sanitized items)
+        user.cart = cart.map(item => ({
+            productId: item._id || item.productId,
+            name: item.name,
+            price: item.price,
+            quantity: item.quantity || 1,
+            image: item.image || item.imageUrl || '',
+        }));
+
+        await user.save();
+        res.json({ cart: user.cart });
+    } catch (error) {
+        res.status(500).json({ message: 'Server Error' });
+    }
+};

@@ -22,7 +22,8 @@ export const createOrder = async (req, res) => {
 
     const request = new paypal.orders.OrdersCreateRequest();
     request.prefer('return=representation');
-    request.requestBody({
+
+    const payload = {
       intent: 'CAPTURE',
       purchase_units: [
         {
@@ -40,12 +41,19 @@ export const createOrder = async (req, res) => {
         return_url: `${process.env.CLIENT_URL || 'http://localhost:3000'}/order-success`,
         cancel_url: `${process.env.CLIENT_URL || 'http://localhost:3000'}/cart`,
       },
-    });
+    };
+
+    console.log('PayPal createOrder payload:', JSON.stringify(payload));
+    request.requestBody(payload);
 
     const order = await client.execute(request);
+    console.log('PayPal createOrder response:', order && order.result ? JSON.stringify(order.result) : order);
     return res.status(201).json({ id: order.result.id });
   } catch (error) {
-    return res.status(500).json({ message: 'Failed to create PayPal order' });
+    console.error('PayPal createOrder error:', error);
+    if (error?.statusCode) console.error('PayPal statusCode:', error.statusCode);
+    const errMsg = error?.message || 'Failed to create PayPal order';
+    return res.status(500).json({ message: 'Failed to create PayPal order', error: errMsg });
   }
 };
 
@@ -61,6 +69,8 @@ export const captureOrder = async (req, res) => {
     const capture = await client.execute(request);
     return res.json(capture.result);
   } catch (error) {
-    return res.status(500).json({ message: 'Failed to capture PayPal order' });
+    console.error('PayPal captureOrder error:', error);
+    const errMsg = error?.message || 'Failed to capture PayPal order';
+    return res.status(500).json({ message: 'Failed to capture PayPal order', error: errMsg });
   }
 };

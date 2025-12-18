@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useReducer, useEffect } from 'react';
+import React, { createContext, useContext, useReducer, useEffect, useRef } from 'react';
+import { useAuth } from './AuthContext';
 
 const CartContext = createContext();
 
@@ -75,6 +76,97 @@ export const CartProvider = ({ children }) => {
   useEffect(() => {
     localStorage.setItem('cart', JSON.stringify(state.items));
   }, [state.items]);
+
+  const { user } = useAuth();
+  const saveTimeout = useRef();
+
+  // Helper to normalize items to server shape (productId, name, price, quantity, image)
+  const normalizeForServer = (items) => {
+    return items.map(i => ({
+      productId: i._id || i.productId,
+      name: i.name,
+      price: i.price,
+      quantity: i.quantity,
+      image: i.image || ''
+    }));
+  };
+
+  // Merge server and local carts (sums quantities)
+  const mergeCarts = (localItems, serverItems) => {
+    const map = new Map();
+    serverItems.forEach(it => {
+      const id = String(it.productId || it._id);
+      map.set(id, { _id: id, name: it.name, price: it.price, quantity: it.quantity || 1, image: it.image || '' });
+    });
+    localItems.forEach(it => {
+      const id = String(it._id || it.productId);
+      if (map.has(id)) {
+        map.get(id).quantity += it.quantity || 1;
+      } else {
+        map.set(id, { _id: id, name: it.name, price: it.price, quantity: it.quantity || 1, image: it.image || '' });
+      }
+    });
+    return Array.from(map.values());
+  };
+
+  // On login, fetch server cart and merge with local cart
+  useEffect(() => {
+    const syncFromServer = async () => {
+      try {
+        const token = localStorage.getItem('userToken');
+        if (!user || !token) return;
+
+        const res = await fetch('/api/users/cart', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (!res.ok) return; // silently ignore
+        const data = await res.json();
+        const serverCart = data.cart || [];
+        const merged = mergeCarts(state.items, serverCart);
+        dispatch({ type: 'LOAD_CART', payload: merged });
+        localStorage.setItem('cart', JSON.stringify(merged));
+
+        // Persist merged cart to server
+        await fetch('/api/users/cart', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ cart: normalizeForServer(merged) }),
+        });
+      } catch (err) {
+        console.error('Failed to sync cart from server', err);
+      }
+    };
+
+    syncFromServer();
+  }, [user]);
+
+  // When cart changes and user is logged in, debounce saving to server
+  useEffect(() => {
+    const pushToServer = async () => {
+      try {
+        const token = localStorage.getItem('userToken');
+        if (!user || !token) return;
+        await fetch('/api/users/cart', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ cart: normalizeForServer(state.items) }),
+        });
+      } catch (err) {
+        console.error('Failed to push cart to server', err);
+      }
+    };
+
+    if (saveTimeout.current) clearTimeout(saveTimeout.current);
+    saveTimeout.current = setTimeout(pushToServer, 1000);
+
+    return () => clearTimeout(saveTimeout.current);
+  }, [state.items, user]);
 
   const addToCart = (product) => {
     dispatch({ type: 'ADD_TO_CART', payload: product });
