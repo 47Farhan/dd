@@ -21,6 +21,23 @@ const __dirname = path.dirname(__filename);
 // Load environment variables
 dotenv.config();
 
+// If an appsettings.json exists, load its keys as a fallback (keeps .env priority)
+try {
+  const appSettingsPath = path.join(__dirname, 'config', 'appsettings.json');
+  if (fs.existsSync(appSettingsPath)) {
+    const raw = fs.readFileSync(appSettingsPath, 'utf8');
+    const appSettings = JSON.parse(raw);
+    ['PAYPAL_CLIENT_ID', 'PAYPAL_CLIENT_SECRET', 'PAYPAL_MODE'].forEach((key) => {
+      if (!process.env[key] && appSettings[key]) {
+        process.env[key] = appSettings[key];
+      }
+    });
+    console.log('Loaded appsettings.json');
+  }
+} catch (err) {
+  console.error('Failed to load appsettings.json:', err.message);
+}
+
 // Connect to MongoDB
 connectDB();
 
@@ -66,3 +83,16 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on PORT ${PORT}`);
 });
+
+// Log masked PayPal env info to help debug credential loading
+const _mask = (s, head = 6, tail = 4) => {
+  if (!s) return '<missing>';
+  const str = String(s);
+  if (str.length <= head + tail) return `${str.slice(0, head)}...${str.slice(-tail)}`;
+  return `${str.slice(0, head)}...${str.slice(-tail)}`;
+};
+const paypalId = process.env.PAYPAL_CLIENT_ID || '';
+const paypalSecret = process.env.PAYPAL_CLIENT_SECRET || '';
+console.log('PAYPAL_MODE:', process.env.PAYPAL_MODE || '<not set>');
+console.log('PAYPAL_CLIENT_ID (masked, len, trimmedLen):', _mask(paypalId), paypalId.length, paypalId.trim().length);
+console.log('PAYPAL_CLIENT_SECRET (masked, len, trimmedLen):', _mask(paypalSecret), paypalSecret.length, paypalSecret.trim().length);

@@ -16,13 +16,40 @@ export const addOrderItems = async (req, res) => {
       totalPrice,
     } = req.body;
 
-    if (orderItems && orderItems.length === 0) {
+    if (!orderItems || orderItems.length === 0) {
       res.status(400).json({ message: 'No order items' });
       return;
     }
 
+    // Ensure required `image` field exists on each order item. If missing,
+    // try to load it from the referenced Product (use first image url).
+    const normalizedOrderItems = await Promise.all(
+      orderItems.map(async (item) => {
+        const normalized = { ...item };
+        if (!normalized.image || String(normalized.image).trim() === '') {
+          try {
+            const product = await Product.findById(normalized.product).lean();
+            if (product) {
+              if (product.images && product.images.length && product.images[0].url) {
+                normalized.image = product.images[0].url;
+              } else if (product.image) {
+                normalized.image = product.image;
+              } else {
+                normalized.image = '';
+              }
+            } else {
+              normalized.image = '';
+            }
+          } catch (err) {
+            normalized.image = '';
+          }
+        }
+        return normalized;
+      })
+    );
+
     const order = new Order({
-      orderItems,
+      orderItems: normalizedOrderItems,
       user: req.user._id,
       shippingAddress,
       paymentMethod,
@@ -35,7 +62,8 @@ export const addOrderItems = async (req, res) => {
     const createdOrder = await order.save();
     res.status(201).json(createdOrder);
   } catch (error) {
-    res.status(500).json({ message: 'Server Error' });
+    console.error('addOrderItems error:', error);
+    res.status(500).json({ message: 'Server Error', error: error?.message });
   }
 };
 
@@ -52,7 +80,8 @@ export const getOrderById = async (req, res) => {
       res.status(404).json({ message: 'Order not found' });
     }
   } catch (error) {
-    res.status(500).json({ message: 'Server Error' });
+    console.error('getOrderById error:', error);
+    res.status(500).json({ message: 'Server Error', error: error?.message });
   }
 };
 
@@ -79,6 +108,7 @@ export const updateOrderToPaid = async (req, res) => {
       res.status(404).json({ message: 'Order not found' });
     }
   } catch (error) {
-    res.status(500).json({ message: 'Server Error' });
+    console.error('updateOrderToPaid error:', error);
+    res.status(500).json({ message: 'Server Error', error: error?.message });
   }
 };
